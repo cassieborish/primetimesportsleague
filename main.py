@@ -22,41 +22,46 @@ numeric_cols = ['TD Thrown', 'TD Caught', 'Sacks', 'Safety', 'Interception']
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv('data/primetime_stats.csv')
-    df[numeric_cols] = df[numeric_cols].fillna(0)
+  df = pd.read_csv('data/primetime_stats.csv')
+  df[numeric_cols] = df[numeric_cols].fillna(0)
 
-    # Convert numeric columns to integers
-    df[numeric_cols] = df[numeric_cols].astype(int)
-    return df
+  df['Team Player'] = df['Team Player'].str.strip()
+
+  # Convert numeric columns to integers
+  df[numeric_cols] = df[numeric_cols].astype(int)
+  return df
 
 
 def run():
-    st.set_page_config(
-        page_title="Prime Time Sports League Flag Football Stats",
-        page_icon="🏈",
-    )
+  st.set_page_config(
+    page_title="Prime Time Sports League Flag Football Stats",
+    page_icon="🏈",
+  )
 
-    data = load_data()
+  data = load_data()
 
-    player_search = st.text_input('Search for a player')
-    summary = data.groupby('Team Player')[numeric_cols].sum().reset_index()
+  player_search = st.text_input('Search for a player')
+  summary = data.groupby('Team Player')[numeric_cols].sum().reset_index()
 
-    if not player_search:
-      st.table(summary)
-    else:
-      filtered_df = data[data['Team Player'].str.contains(player_search, case=False, na=False)].reset_index()
-      
-      st.subheader('Career stats')
-      st.write('Career totals')
-      sums = filtered_df[['TD Thrown', 'TD Caught', 'Sacks', 'Safety', 'Interception']].sum()
-      st.table(sums)
+  if not player_search:
+    st.dataframe(summary, use_container_width=True, hide_index=True)
+  else:
+    filtered_df = data[data['Team Player'].str.contains(player_search, case=False, na=False)].reset_index(drop=True)
+    
+    st.subheader('Career stats')
+    st.write('Career totals')
+    sums = filtered_df[['TD Thrown', 'TD Caught', 'Sacks', 'Safety', 'Interception']].sum()
+    # rename column to 'Total' for better display
+    sums.rename('Total', inplace=True)
+    st.table(sums)
 
-      st.write('Season averages')
-      means = filtered_df[['TD Thrown', 'TD Caught', 'Sacks', 'Safety', 'Interception']].mean()
-      st.table(means)
+    st.write('Season averages')
+    means = filtered_df[['TD Thrown', 'TD Caught', 'Sacks', 'Safety', 'Interception']].mean()
+    means.rename('Average', inplace=True)
+    st.table(means)
 
-      st.subheader('Season stats')
-      st.table(filtered_df)
+    st.subheader('Season stats')
+    st.table(filtered_df)
 
 
 
